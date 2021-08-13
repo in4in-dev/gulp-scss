@@ -1,3 +1,4 @@
+var __colors       = require('colors');
 var __gulp         = require("gulp");
 var __autoprefixer = require("autoprefixer");
 var __rename       = require("gulp-rename");
@@ -32,7 +33,7 @@ function createErrorFunc(prefix){
                 "\n"          +
                 prefix        +
                 ": "          +
-                error.message +
+                error.formatted +
                 "\n"          +
                 "------"
             ).red
