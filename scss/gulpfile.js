@@ -26,14 +26,14 @@ const PUBLIC_DIR = '../';
 ///////////////////////////////////////////////////
 
 function createErrorFunc(prefix){
-    return function(error){
+    return ({formatted}) => {
         console.log(
             (
                 "------"      +
                 "\n"          +
                 prefix        +
                 ": "          +
-                error.formatted +
+                formatted +
                 "\n"          +
                 "------"
             ).red
@@ -80,33 +80,32 @@ function compileScss(path, out){
 
 }
 
-////////////////////////////////////////////////////
-
-exports.watch = __gulp.parallel(
-    function(d){
-
-        let watchPath = (SCSS_WATCH_DIR + "**/*.scss");
-
-        __gulp.watch(watchPath).on("change", function(path){
-
-            compileScss(SCSS_MAIN_FILE, SCSS_OUTPUT_DIR);
-
-            // if(/\\_(.*)\.scss$/.test(path)){
-            //
-            // }else{
-                // compileScss(path, SCSS_OUTPUT_DIR);
-            // }
-
-            __browserSync.reload();
-
-        });
-
+function watchScss(handler){
+    __gulp.watch(SCSS_WATCH_DIR + "**/*.scss").on("change", (path) => {
         compileScss(SCSS_MAIN_FILE, SCSS_OUTPUT_DIR);
+        handler && handler();
+    });
 
-        d();
+    compileScss(SCSS_MAIN_FILE, SCSS_OUTPUT_DIR);
+}
 
+////////////////////////////////////////////////////
+exports.build = __gulp.series(next => {
+    compileScss(SCSS_MAIN_FILE, SCSS_OUTPUT_DIR);
+    next();
+});
+
+exports.watch = __gulp.series(next => {
+   watchScss();
+   next();
+});
+
+exports.serve = __gulp.parallel(
+    next => {
+        watchScss(() => __browserSync.reload());
+        next();
     },
-    function(d){
+    next => {
 
         __browserSync.init({
             server: {
@@ -115,7 +114,7 @@ exports.watch = __gulp.parallel(
             port: 3000
         });
 
-        d();
+        next();
 
     }
 );
